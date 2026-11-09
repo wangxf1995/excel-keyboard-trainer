@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excel 纯键盘训练台 · v3</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#f7f9f5; --soft:#eef4e8; --line:#dfe6d8;
+  --text:#1f2a17; --muted:#5f6b55; --primary:#548235; --deep:#375623;
+  --softgreen:#e2efda; --ok:#2f6b2f; --bad:#a32d2d; --warn:#8a6100;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+  font-size:14px;line-height:1.65}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 22px 60px}
+header h1{margin:0;font-size:20px;font-weight:600;color:var(--deep)}
+header .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge{background:var(--softgreen);color:var(--deep);border:1px solid var(--line);
+  border-radius:999px;padding:2px 10px;font-size:12px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:18px 0 14px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.tabs button{border:1px solid transparent;background:transparent;color:var(--muted);
+  padding:7px 13px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit}
+.tabs button:hover{background:var(--surface)}
+.tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.panel{display:none}
+.panel.on{display:block}
+h2{font-size:16px;font-weight:600;margin:0 0 10px;color:var(--deep)}
+h3{font-size:14px;font-weight:600;margin:18px 0 8px;color:var(--deep)}
+p{margin:6px 0}
+.note{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--primary);
+  border-radius:var(--radius);padding:10px 13px;font-size:12.5px;color:var(--muted);margin:10px 0}
+.note b{color:var(--text)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.stat .k{font-size:11.5px;color:var(--muted)}
+.stat .v{font-size:22px;font-weight:600;color:var(--deep);line-height:1.3}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin:12px 0}
+.quiz-cat{font-size:12px;color:var(--muted);letter-spacing:.05em}
+.quiz-q{font-size:19px;font-weight:600;margin:8px 0 4px;color:var(--deep)}
+.quiz-hint{font-size:13px;color:var(--muted)}
+.keycapture{margin:14px 0;padding:14px;border:1px dashed var(--primary);border-radius:var(--radius);
+  background:var(--soft);text-align:center;font-size:13px;color:var(--muted)}
+.keycapture.active{border-style:solid;background:var(--softgreen)}
+.keyslot{font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:18px;
+  color:var(--deep);font-weight:600;letter-spacing:.02em}
+.feedback{min-height:26px;margin-top:10px;font-size:13.5px;font-weight:500}
+.feedback.ok{color:var(--ok)} .feedback.bad{color:var(--bad)} .feedback.info{color:var(--muted)}
+kbd{display:inline-block;font-family:ui-monospace,Consolas,"Courier New",monospace;
+  font-size:12px;background:var(--surface);border:1px solid var(--line);
+  border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--deep);white-space:nowrap}
+.btn{border:1px solid var(--primary);background:var(--primary);color:#fff;
+  padding:7px 13px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit}
+.btn.ghost{background:var(--bg);color:var(--primary)}
+.btn.gray{border-color:var(--line);background:var(--surface);color:var(--muted)}
+.btn:hover{filter:brightness(.96)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+input[type=text],input[type=search],select{border:1px solid var(--line);border-radius:8px;
+  padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)}
+input[type=search]{min-width:220px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);
+  border-radius:999px;padding:3px 11px;font-size:12px;cursor:pointer;font-family:inherit}
+.chip.on{background:var(--softgreen);border-color:var(--primary);color:var(--deep)}
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{background:var(--primary);color:#fff;text-align:left;font-weight:500;
+  padding:8px 9px;position:sticky;top:0;z-index:1}
+td{border-bottom:1px solid var(--line);padding:7px 9px;vertical-align:top}
+tr:hover td{background:var(--surface)}
+td.num{color:var(--muted);width:38px;text-align:center}
+.star{color:var(--primary);font-weight:600}
+.blocked{color:var(--muted);background:var(--surface);border-radius:4px;padding:0 5px;font-size:11px}
+.tbl-wrap{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
+.sect-title{background:var(--softgreen);color:var(--deep);font-weight:600;
+  padding:7px 11px;border-radius:8px;margin:16px 0 8px;font-size:13.5px}
+.step{display:grid;grid-template-columns:36px 1fr 200px;gap:10px;padding:8px 10px;
+  border-bottom:1px solid var(--line);align-items:start}
+.step .n{background:var(--soft);border-radius:6px;text-align:center;color:var(--deep);font-weight:600}
+.step .what{font-size:13px}
+.step .key{font-size:12.5px}
+.daygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.day{border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;background:var(--bg);cursor:pointer}
+.day:hover{background:var(--surface)}
+.day.done{background:var(--softgreen);border-color:var(--primary)}
+.day .d{font-size:12px;color:var(--muted)}
+.day .t{font-size:13px;margin-top:4px}
+.day .s{font-size:11.5px;color:var(--primary);margin-top:6px}
+.progress{height:8px;background:var(--surface);border-radius:999px;overflow:hidden;margin:10px 0}
+.progress i{display:block;height:100%;background:var(--primary);width:0}
+.mini{font-size:12px;color:var(--muted)}
+footer{margin-top:28px;border-top:1px solid var(--line);padding-top:12px;color:var(--muted);font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}
+  .step{grid-template-columns:30px 1fr}.step .key{grid-column:2/3}}
+@media print{
+  .tabs,.btn,.chips,.keycapture,input,footer,.no-print{display:none!important}
+  .panel{display:none!important}
+  .panel.on{display:block!important}
+  body.print-all .panel{display:block!important;page-break-before:always}
+  body.print-all .panel:first-of-type{page-break-before:auto}
+  .tbl-wrap{max-height:none;overflow:visible}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Excel 纯键盘训练台</h1>
+  <div class="sub" id="metaLine"></div>
+  <div class="badges">
+    <span class="badge">单文件 · 零外部依赖</span>
+    <span class="badge">断网可用</span>
+    <span class="badge">进度仅存本机 localStorage</span>
+    <span class="badge">键位规范 v3</span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button type="button" data-tab="train" class="on">训练台</button>
+  <button type="button" data-tab="quick">快捷键速查</button>
+  <button type="button" data-tab="chain">Alt 访问键链</button>
+  <button type="button" data-tab="steps">分步练习</button>
+  <button type="button" data-tab="days">21 天打卡</button>
+  <button type="button" data-tab="review">间隔复习</button>
+  <button type="button" data-tab="about">依据与说明</button>
+</nav>
+
+<main>
+<section class="panel on" data-panel="train">
+  <h2>按键训练</h2>
+  <div class="note" id="blockNote"></div>
+  <div class="stats">
+    <div class="stat"><div class="k">今日待复习</div><div class="v" id="sDue">0</div></div>
+    <div class="stat"><div class="k">已掌握（≥4 级）</div><div class="v" id="sMastered">0</div></div>
+    <div class="stat"><div class="k">正确率</div><div class="v" id="sAcc">—</div></div>
+    <div class="stat"><div class="k">连续正确</div><div class="v" id="sStreak">0</div></div>
+  </div>
+  <div class="card">
+    <div class="quiz-cat" id="qCat">准备中</div>
+    <div class="quiz-q" id="qText">点击下方「开始练习」，然后直接按键</div>
+    <div class="quiz-hint" id="qHint">页面会捕获真实键盘事件；不要用鼠标点答案。</div>
+    <div class="keycapture" id="capture">未开始</div>
+    <div class="feedback info" id="feedback"></div>
+    <div class="row no-print">
+      <button type="button" class="btn" id="btnStart">开始练习</button>
+      <button type="button" class="btn ghost" id="btnAnswer">显示答案</button>
+      <button type="button" class="btn ghost" id="btnSkip">跳过</button>
+      <button type="button" class="btn gray" id="btnReset">重置进度</button>
+      <span class="mini" id="timer"></span>
+    </div>
+  </div>
+  <div class="note">
+    <b>链题怎么按：</b><code>Alt+H, O, I</code> 表示先按 <kbd>Alt</kbd>+<kbd>H</kbd>，松开后依次按 <kbd>O</kbd>、<kbd>I</kbd>。
+    页面按段判定，错一段即重来。组合键 <code>Ctrl+Shift+↓</code> 的 <code>+</code> 表示同时按。
+  </div>
+</section>
+
+<section class="panel" data-panel="quick">
+  <h2>快捷键速查 <span class="mini" id="qCount"></span></h2>
+  <div class="row no-print">
+    <input type="search" id="qSearch" placeholder="搜索操作 / 按键 / 备注">
+    <select id="qCatSel"><option value="">全部类别</option></select>
+    <button type="button" class="btn ghost" id="btnPrintQuick">打印速查表</button>
+  </div>
+  <div class="chips" id="qChips"></div>
+  <div class="tbl-wrap"><table id="qTable"><thead><tr>
+    <th>#</th><th>类别</th><th>操作</th><th>按键</th><th>替代的鼠标动作</th><th>备注 / 版本差异</th>
+  </tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="panel" data-panel="chain">
+  <h2>Alt 访问键链 <span class="mini" id="cCount"></span></h2>
+  <div class="note"><b>铁律：</b>按 <kbd>Alt</kbd> 看屏幕上现出的字母，不要背表。字母随 Excel 版本、语言版与 WPS 变化。<br>
+    v3 采用微软官方写法：首段 <code>Alt+H</code> 保留 <code>+</code>，后续字母用逗号表示依次按。</div>
+  <div class="tbl-wrap"><table id="cTable"><thead><tr>
+    <th>#</th><th>链</th><th>按法</th><th>做什么</th><th>替代的鼠标动作</th><th>记忆逻辑</th>
+  </tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="panel" data-panel="steps">
+  <h2>分步练习 <span class="mini" id="stCount"></span></h2>
+  <div class="note">借鉴 excel-easy.com：一页一主题、编号步骤、先说目的再给键、Note 提示。
+    示例文件不用另下载，在原工作簿 <code>04_练习数据</code> 上练，练完 <kbd>Ctrl</kbd>+<kbd>Z</kbd> 还原。</div>
+  <div id="stepList"></div>
+</section>
+
+<section class="panel" data-panel="days">
+  <h2>21 天打卡</h2>
+  <div class="note">点击卡片切换完成状态，进度只存本机。<b>漏一天不清零</b>（Lally et al. 2010）。
+    第 20 天是全天真实工作，键盘优先即可，合理用鼠标不计破戒。</div>
+  <div class="progress"><i id="dayBar"></i></div>
+  <div class="row"><span class="mini" id="dayProgress"></span>
+    <button type="button" class="btn ghost no-print" id="btnClearDays">清空打卡</button></div>
+  <div class="daygrid" id="dayGrid"></div>
+</section>
+
+<section class="panel" data-panel="review">
+  <h2>间隔复习队列</h2>
+  <div class="note">Lally et al. 2010：自动化中位 <b>66 天</b>、区间 18–254 天，漏做一天不显著影响曲线；
+    Singh et al. 2024：20 项研究 2601 人，中位 59–66 天。故 21 天只作入门验收，不设「破戒清零」。
+    本页按答对次数递增复习间隔（1→2→4→7→14→30 天），答错次日重来。</div>
+  <h3>固定复习轮次</h3>
+  <div class="tbl-wrap"><table id="rTable"><thead><tr>
+    <th>轮次</th><th>距首次(天)</th><th>复习内容</th><th>判定标准</th><th>备注</th>
+  </tr></thead><tbody></tbody></table></div>
+  <h3>逐题掌握度</h3>
+  <div class="tbl-wrap"><table id="mTable"><thead><tr>
+    <th>按键</th><th>类别</th><th>掌握度</th><th>下次复习</th><th>答对 / 答错</th>
+  </tr></thead><tbody></tbody></table></div>
+</section>
+
+<section class="panel" data-panel="about">
+  <h2>适用环境与规范</h2>
+  <div id="noteList"></div>
+  <h3>依据来源（证据分级）</h3>
+  <div class="tbl-wrap"><table id="srcTable"><thead><tr>
+    <th>等级</th><th>来源</th><th>链接 / 出处</th><th>支撑哪些内容</th><th>日期</th><th>备注</th>
+  </tr></thead><tbody></tbody></table></div>
+  <h3>本机与数据</h3>
+  <div class="note">本页为单文件 HTML，零外部请求，断网可用。练习数据是模拟年级考勤，无真实学生姓名或学号。
+    进度写入浏览器 localStorage，不上传任何服务器。清浏览器数据会丢失进度，可用下方按钮导出备份。</div>
+  <div class="row no-print">
+    <button type="button" class="btn ghost" id="btnExport">导出进度 JSON</button>
+    <button type="button" class="btn ghost" id="btnPrintAll">打印全部</button>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span id="footMeta"></span> · 键位以 Microsoft Support《Excel 中的键盘快捷方式》为准 ·
+  训练体例借鉴 excel-easy.com · 浏览器与输入法占用的键已标记为不可测
+</footer>
+</div>
+
+<script>
+const DATA = {"meta":{"source":"20261009_Excel纯键盘训练手册_v3.xlsx","sheets":10,"shortcuts":59,"chains":38,"steps":23,"days":21,"quizCount":35,"blockedCount":9,"blockedKeys":["Alt+F4","Ctrl+F1","Ctrl+Shift+L","Ctrl+Shift+PgDn","Ctrl+T","Ctrl+W","Ctrl+空格","F12","Shift+空格"],"built":"2026-11-09"},"shortcuts":[{"n":1,"cat":"导航","op":"跳到数据区边缘","key":"★ Ctrl+方向键","star":true,"mouse":"拖滚动条 / 反复点方向键","note":"遇到空行会停在空行前，多按一次","blocked":false},{"n":2,"cat":"导航","op":"到工作表右下角","key":"★ Ctrl+End","star":true,"mouse":"拖滚动条到尽头","note":"WPS 同","blocked":false},{"n":3,"cat":"导航","op":"回到 A1","key":"★ Ctrl+Home","star":true,"mouse":"Ctrl+End 后再拖回来","note":"WPS 同","blocked":false},{"n":4,"cat":"导航","op":"跳到指定单元格","key":"★ F5（或 Ctrl+G）","star":true,"mouse":"在名称框里点一下再打字","note":"F5 输入 D12 回车即达","blocked":false},{"n":5,"cat":"导航","op":"切工作表","key":"★ Ctrl+PgDn / PgUp","star":true,"mouse":"点底部工作表标签","note":"手不离键盘的关键一条","blocked":false},{"n":6,"cat":"导航","op":"多表同时选中","key":"Ctrl+Shift+PgDn","star":false,"mouse":"按住 Ctrl 点多个标签","note":"之后输入会同时写入多表","blocked":true},{"n":7,"cat":"导航","op":"非相邻区域加选","key":"★ Shift+F8","star":true,"mouse":"按住 Ctrl 用鼠标框第二个区","note":"按 Esc 会清空整个选区，慎用","blocked":false},{"n":8,"cat":"导航","op":"当前数据区域","key":"Ctrl+Shift+*","star":false,"mouse":"Ctrl+A 第一次","note":"旧版 Lotus 键位，2016+ 仍有效","blocked":false},{"n":9,"cat":"选择","op":"整列 / 整行","key":"★ Ctrl+空格 / Shift+空格","star":true,"mouse":"点列标 A / 点行号 12","note":"注意是「空格」不是其他键；中文输入法可能占用 Ctrl+空格，见 00 表","blocked":true},{"n":10,"cat":"选择","op":"扩展到数据边缘","key":"★ Ctrl+Shift+方向键","star":true,"mouse":"按住 Shift 拖选","note":"最长串：从 F8 选到最后一行","blocked":false},{"n":11,"cat":"选择","op":"扩展到末尾","key":"Ctrl+Shift+End","star":false,"mouse":"拖到底再 Shift 点","note":"超大表会卡，慎用","blocked":false},{"n":12,"cat":"选择","op":"全选","key":"Ctrl+A（两次=整表）","star":false,"mouse":"Ctrl+A","note":"WPS 同","blocked":false},{"n":13,"cat":"选择","op":"按条件定位","key":"F5 → Alt+S → K","star":false,"mouse":"Ctrl 点每个空格","note":"K=空值；填 0 后按 Ctrl+Enter 一次填满","blocked":false},{"n":14,"cat":"编辑","op":"进入单元格编辑","key":"★ F2","star":true,"mouse":"双击单元格","note":"光标落在末尾；Home/End 到行首尾","blocked":false},{"n":15,"cat":"编辑","op":"展开/收起公式栏","key":"Ctrl+Shift+U","star":false,"mouse":"点公式栏拖宽","note":"长公式必备，配合 F2 使用","blocked":false},{"n":16,"cat":"编辑","op":"确认并留在原地","key":"★ Ctrl+Enter","star":true,"mouse":"点回原单元格","note":"多格选中时=一次填整个选区","blocked":false},{"n":17,"cat":"编辑","op":"单元格内换行","key":"★ Alt+Enter","star":true,"mouse":"在文本里反复点位置","note":"WPS 同","blocked":false},{"n":18,"cat":"编辑","op":"向下填充","key":"★ Ctrl+D","star":true,"mouse":"拖填充柄","note":"Ctrl+' 从上一格复制公式；Ctrl+Shift+\" 从上一格复制值。两者都不是「向上填充」，Excel 无向上填充快捷键。","blocked":false},{"n":19,"cat":"编辑","op":"快速填充(智能拆分合并)","key":"★ Ctrl+E","star":true,"mouse":"手动剪贴重打","note":"2013+ 才有；WPS 支持，叫\"智能填充\"","blocked":false},{"n":20,"cat":"编辑","op":"切换绝对/相对引用","key":"★ F4","star":true,"mouse":"手动打 $ 符号","note":"循环 $A$1→A$1→$A1→A1（按 4 次回到原样）；不在公式编辑态时 F4 用于重复上一步操作","blocked":false},{"n":21,"cat":"编辑","op":"插入行/列/单元格","key":"★ Ctrl+Shift+加号","star":true,"mouse":"右键→插入","note":"先 Shift+空格 选中整行则直接插整行，不弹框","blocked":false},{"n":22,"cat":"编辑","op":"删除行/列/单元格","key":"★ Ctrl+减号","star":true,"mouse":"右键→删除","note":"同上逻辑","blocked":false},{"n":23,"cat":"编辑","op":"撤销 / 重做","key":"★ Ctrl+Z / Ctrl+Y","star":true,"mouse":"反复点撤销箭头","note":"Ctrl+Y 重复上一个命令或操作；撤销后表现为重做。Excel 中两者合一","blocked":false},{"n":24,"cat":"编辑","op":"选择性粘贴","key":"★ Ctrl+Alt+V","star":true,"mouse":"右键→选择性粘贴","note":"再按 V=仅数值、T=仅格式、W=仅列宽、F=仅公式；旧键 Alt+E, S","blocked":false},{"n":25,"cat":"编辑","op":"插入超链接","key":"Ctrl+K","star":false,"mouse":"右键→链接","note":"—","blocked":false},{"n":26,"cat":"编辑","op":"查找 / 替换","key":"Ctrl+F / Ctrl+H","star":false,"mouse":"点搜索框","note":"Ctrl+F 在对话框里可直接当导航用","blocked":false},{"n":27,"cat":"格式","op":"设置单元格格式","key":"★ Ctrl+1","star":true,"mouse":"右键→设置单元格格式","note":"打开后全用 Tab + 方向键，不要点","blocked":false},{"n":28,"cat":"格式","op":"加粗 / 斜体 / 下划线","key":"★ Ctrl+B / I / U","star":true,"mouse":"点工具栏 B 图标","note":"等价 Ctrl+2/3/4","blocked":false},{"n":29,"cat":"格式","op":"数字(常规)","key":"Ctrl+Shift+~","star":false,"mouse":"下拉选数字格式","note":"—","blocked":false},{"n":30,"cat":"格式","op":"货币两位小数","key":"Ctrl+Shift+$","star":false,"mouse":"下拉选货币","note":"—","blocked":false},{"n":31,"cat":"格式","op":"百分比","key":"★ Ctrl+Shift+%","star":true,"mouse":"点%图标","note":"注意会 ×100","blocked":false},{"n":32,"cat":"格式","op":"千位分隔符","key":"★ Ctrl+Shift+!","star":true,"mouse":"点逗号图标","note":"小数位 2，可用 Alt+H, 9 / Alt+H, 0 增减","blocked":false},{"n":33,"cat":"格式","op":"科学计数 / 日期 / 时间","key":"Ctrl+Shift+^ / # / @","star":false,"mouse":"下拉选格式","note":"—","blocked":false},{"n":34,"cat":"格式","op":"加减边框","key":"Ctrl+Shift+& / _","star":false,"mouse":"点边框下拉","note":"—","blocked":false},{"n":35,"cat":"格式","op":"清除格式(保留内容)","key":"Alt+H + E + F","star":false,"mouse":"右键→清除格式","note":"E=清除，F=仅格式；Alt+H,E,A 全清。访问键链逐键按，中途不要重按 Alt","blocked":false},{"n":36,"cat":"格式","op":"自动调整列宽","key":"★ Alt+H + O + I","star":true,"mouse":"双击列边界","note":"这是访问键链，必须练熟","blocked":false},{"n":37,"cat":"格式","op":"设定列宽","key":"Alt+H + O + W","star":false,"mouse":"拖列边界","note":"弹出对话框后用 Alt+W 输入","blocked":false},{"n":38,"cat":"格式","op":"隐藏/取消隐藏 行/列","key":"★ Ctrl+9 藏行 / Ctrl+0 藏列","star":true,"mouse":"右键→隐藏","note":"取消隐藏 Alt+H, O, U, G；选中多行再藏才看得出效果","blocked":false},{"n":39,"cat":"格式","op":"格式刷","key":"★ Alt+H + F + P","star":true,"mouse":"点刷子图标","note":"或 Ctrl+Shift+C 复制格式 / Ctrl+Shift+V 贴格式","blocked":false},{"n":40,"cat":"格式","op":"合并居中","key":"★ Alt+H + M + M","star":true,"mouse":"点合并按钮","note":"Alt+H, M, M 合并，Alt+H, M, U 取消合并","blocked":false},{"n":41,"cat":"公式","op":"求和","key":"★ Alt+=","star":true,"mouse":"点自动求和","note":"会自动判断方向，比打 SUM 快","blocked":false},{"n":42,"cat":"公式","op":"插入函数","key":"Shift+F3","star":false,"mouse":"点 fx 按钮","note":"—","blocked":false},{"n":43,"cat":"公式","op":"算公式的一部分","key":"选中片段按 F9","star":false,"mouse":"把中间值手抄出来验证","note":"不可逆！验证完按 Esc 还原","blocked":false},{"n":44,"cat":"公式","op":"全部重算 / 当前表 / 强制","key":"F9 / Shift+F9 / Ctrl+Alt+F9","star":false,"mouse":"按 F9 找不到就等它自己算","note":"大表 Ctrl+Alt+Shift+F9 很慢，别乱按","blocked":false},{"n":45,"cat":"公式","op":"命名区域","key":"★ Ctrl+F3","star":true,"mouse":"在名称框打字","note":"比背 D12:D200 快得多","blocked":false},{"n":46,"cat":"公式","op":"核对引用来源","key":"★ Ctrl+[ / Ctrl+]","star":true,"mouse":"顺着颜色找引用格","note":"Ctrl+[ 跳到本公式直接引用的单元格；Ctrl+] 跳到引用本单元格的公式所在格","blocked":false},{"n":47,"cat":"公式","op":"显示所有公式","key":"Ctrl+`","star":false,"mouse":"一格一格点开看","note":"审计利器","blocked":false},{"n":48,"cat":"数据","op":"开/关筛选","key":"★ Ctrl+Shift+L","star":true,"mouse":"点筛选箭头","note":"—","blocked":true},{"n":49,"cat":"数据","op":"排序","key":"Alt+A 后按屏幕字母提示","star":false,"mouse":"点排序按钮","note":"升/降序字母随版本变，按 Alt 看提示，别背","blocked":false},{"n":50,"cat":"数据","op":"冻结窗格","key":"★ Alt+W + F + F","star":true,"mouse":"点视图→冻结","note":"首行冻结 Alt+W, F, F，首列 Alt+W, F, L","blocked":false},{"n":51,"cat":"数据","op":"转换为表格","key":"★ Ctrl+T","star":true,"mouse":"点套用表格格式","note":"之后聚合可用结构化引用 Table[列]","blocked":true},{"n":52,"cat":"数据","op":"删除/移动工作表","key":"Alt+H, D, S / Alt+E, M","star":false,"mouse":"点标签右键","note":"删表不可 Ctrl+Z 撤销，注意","blocked":false},{"n":53,"cat":"菜单","op":"打开功能区导航","key":"★ 单按 Alt","star":true,"mouse":"点各个选项卡","note":"屏幕上出现字母，逐键跟进；这是所有菜单操作的地基","blocked":false},{"n":54,"cat":"菜单","op":"开始/插入/公式/数据/审阅/视图","key":"Alt+H / N / M / A / R / W","star":false,"mouse":"逐个点选项卡","note":"Alt 主字母以 Excel 为准；WPS 部分访问键缺失，见 06_破戒陷阱 第 8 条","blocked":false},{"n":55,"cat":"菜单","op":"搜索命令","key":"★ Alt+Q","star":true,"mouse":"在菜单里翻找命令","note":"输中文即可，如\"网格线\"，回车直达","blocked":false},{"n":56,"cat":"菜单","op":"文件页 / 另存为","key":"Alt+F / F12","star":false,"mouse":"点文件","note":"F12 另存为更快","blocked":true},{"n":57,"cat":"菜单","op":"折叠功能区","key":"Ctrl+F1","star":false,"mouse":"双击选项卡","note":"屏幕小的时候腾空间","blocked":true},{"n":58,"cat":"菜单","op":"右键菜单","key":"Shift+F10","star":false,"mouse":"点右键","note":"定位到格上再按，键盘完整替代右键","blocked":false},{"n":59,"cat":"窗口","op":"新建窗口/切换","key":"Ctrl+Alt+F2 / Ctrl+W / Alt+F4","star":false,"mouse":"点任务栏","note":"Alt+Tab 切外部窗口","blocked":true}],"chains":[{"n":1,"chain":"Alt","how":"单按","what":"显示所有字母提示","mouse":"点选项卡","memo":"地基，见到没练过的功能就按 Alt 看"},{"n":2,"chain":"Alt+H","how":"开始","what":"进\"开始\"选项卡","mouse":"点开始","memo":"H=Home tab"},{"n":3,"chain":"Alt+N","how":"插入","what":"进\"插入\"","mouse":"点插入","memo":"N=iNsert"},{"n":4,"chain":"Alt+M","how":"公式","what":"进\"公式\"","mouse":"点公式","memo":"M=forMula"},{"n":5,"chain":"Alt+A","how":"数据","what":"进\"数据\"","mouse":"点数据","memo":"A=dAta"},{"n":6,"chain":"Alt+W","how":"视图","what":"进\"视图\"","mouse":"点视图","memo":"W=Window/视图"},{"n":7,"chain":"Alt+R","how":"审阅","what":"进\"审阅\"","mouse":"点审阅","memo":"R=Review"},{"n":8,"chain":"Alt+F","how":"文件","what":"打开文件页","mouse":"点文件","memo":"F=File"},{"n":9,"chain":"Alt+Q","how":"搜索","what":"输入命令名直达","mouse":"在菜单里翻","memo":"中文可搜，如输\"网格线\"回车"},{"n":10,"chain":"Alt+H, O, I","how":"开始→格式→列宽","what":"自动调整列宽","mouse":"双击列边界","memo":"O=格式(Format)，I=最宽内容"},{"n":11,"chain":"Alt+H, O, W","how":"开始→格式→列宽","what":"输入精确列宽","mouse":"拖列边界","memo":"W=Width"},{"n":12,"chain":"Alt+H, O, H","how":"开始→格式→行高","what":"自动调整行高","mouse":"拖行边界","memo":"H=Height"},{"n":13,"chain":"Alt+H, E, F","how":"开始→编辑→清除","what":"只清格式保留内容","mouse":"右键→清除格式","memo":"E=编辑，F=格式"},{"n":14,"chain":"Alt+H, E, A","how":"开始→编辑→清除","what":"全清(内容+格式)","mouse":"右键→清除全部","memo":"A=All"},{"n":15,"chain":"Alt+H, M, M","how":"开始→合并","what":"合并后居中","mouse":"点合并居中","memo":"M=Merge"},{"n":16,"chain":"Alt+H, M, U","how":"开始→合并","what":"取消合并单元格","mouse":"点取消合并","memo":"U=Unmerge"},{"n":17,"chain":"Alt+H, D, R","how":"开始→删除","what":"删除所在行","mouse":"右键→删除行","memo":"D=Delete，R=Row"},{"n":18,"chain":"Alt+H, D, C","how":"开始→删除","what":"删除所在列","mouse":"右键→删除列","memo":"C=Column"},{"n":19,"chain":"Alt+H, I, R","how":"开始→插入","what":"插入工作表行","mouse":"右键→插入","memo":"I=Insert，R=Row"},{"n":20,"chain":"Alt+H, I, C","how":"开始→插入","what":"插入工作表列","mouse":"右键→插入","memo":"I+C"},{"n":21,"chain":"Alt+H, FP","how":"开始→格式刷","what":"格式刷(按两次连刷)","mouse":"点刷子","memo":"FP=Format Painter"},{"n":22,"chain":"Alt+H, B","how":"开始→字体","what":"加粗","mouse":"点 B","memo":"B=Bold"},{"n":23,"chain":"Alt+H, FE","how":"开始→字体","what":"删除线","mouse":"点 ab̶","memo":"FE=ForMat...删格"},{"n":24,"chain":"Alt+H, U, 2","how":"开始→下划线","what":"双下划线","mouse":"点下划线下拉","memo":"2=double"},{"n":25,"chain":"Alt+H, O, T","how":"开始→工作表标签","what":"给工作表标签上色","mouse":"右键标签→表格颜色","memo":"T=Tab color"},{"n":26,"chain":"Alt+A, D","how":"数据→排序/筛选","what":"打开筛选箭头","mouse":"点筛选","memo":"D=Data filter 区"},{"n":27,"chain":"Alt+A, M, M","how":"数据→分级","what":"创建组","mouse":"右键→组合","memo":"M=MoM 分组"},{"n":28,"chain":"Alt+A, S","how":"数据→排序","what":"打开排序对话框","mouse":"点排序","memo":"S=Sort"},{"n":29,"chain":"Alt+N, V","how":"插入→图表","what":"插入图表向导","mouse":"点图表下拉","memo":"V 区为图表/插图"},{"n":30,"chain":"Alt+N, T, T","how":"插入→表格","what":"把区域转为 Table","mouse":"点套用表格样式","memo":"T=Table"},{"n":31,"chain":"Alt+W, F, F","how":"视图→冻结","what":"冻结首行/窗格","mouse":"点冻结窗格","memo":"F=F(冻结)"},{"n":32,"chain":"Alt+W, F, L","how":"视图→冻结","what":"冻结首列","mouse":"点冻结首列","memo":"L=Left"},{"n":33,"chain":"Alt+W, G","how":"视图","what":"显示/隐藏网格线","mouse":"点网格线开关","memo":"G=Gridlines"},{"n":34,"chain":"Shift+F2","how":"插入/编辑单元格备注","what":"加批注","mouse":"点拆分","memo":"Ctrl+Shift+F2 插入线程注释；官方无 Alt+Shift+F2 组合键"},{"n":35,"chain":"Alt+M, M, M","how":"公式","what":"自动求和区域","mouse":"点自动求和","memo":"SUM"},{"n":36,"chain":"Alt+M, V, V","how":"公式→名称管理器","what":"查看/改命名区域","mouse":"点名称管理器","memo":"V=NamE 区"},{"n":37,"chain":"Alt+T, O","how":"工具→选项","what":"打开选项对话框","mouse":"文件→选项","memo":"T=Tools 旧键位；新版会弹「早期版本访问键」提示，建议 Alt,F→T 或 Alt,Q"},{"n":38,"chain":"Alt+Shift+F2","how":"审阅→插入批注","what":"加批注","mouse":"右键→新建批注","memo":"F2 与编辑的 F2 不同，组合键"}],"steps":[{"sect":"1 Basic","n":"1","at":"04!A4:J19","what":"选中整块练习数据，准备复制","key":"Ctrl+A","result":"按一次选当前区域，再按一次选整张表"},{"sect":"1 Basic","n":"2","at":"已选区域","what":"把数据复制到剪贴板","key":"Ctrl+C","result":"虚线框出现即成功"},{"sect":"1 Basic","n":"3","at":"04!A26","what":"把数据粘贴到空白区做实验","key":"Ctrl+V","result":"Note: 在副本上练，别覆盖原数据"},{"sect":"1 Basic","n":"4","at":"任意格","what":"撤销刚才的粘贴","key":"Ctrl+Z","result":"Note: Ctrl+Y 可重做/重复上一步"},{"sect":"2 Moving","n":"1","at":"04!A5","what":"快速跳到本列数据区底边","key":"Ctrl+↓","result":"停在 D19；遇空格会提前停，再按一次"},{"sect":"2 Moving","n":"2","at":"任意格","what":"跳到工作表已用区域最右下角","key":"Ctrl+End","result":"到 J46 附近（含答案基准区）"},{"sect":"2 Moving","n":"3","at":"任意格","what":"回到工作表开头","key":"Ctrl+Home","result":"到 A1"},{"sect":"2 Moving","n":"4","at":"打卡表","what":"切到下一个 / 上一个工作表","key":"Ctrl+PgDn / Ctrl+PgUp","result":"Note: Alt+Tab 是切外部程序，别混"},{"sect":"3 Selecting","n":"1","at":"04!A5","what":"从当前格向下选到数据边缘","key":"Ctrl+Shift+↓","result":"Note: 多选一格表头时改用 Shift+↓ 微调"},{"sect":"3 Selecting","n":"2","at":"04!D8","what":"选中整列","key":"Ctrl+空格","result":"注意：中文输入法常占用此键，先切英文状态（见 00 表）"},{"sect":"3 Selecting","n":"3","at":"04!A8","what":"选中整行","key":"Shift+空格","result":"选中整行后再做插入/删除才不会弹对话框"},{"sect":"3 Selecting","n":"4","at":"04!A5","what":"选中当前连续数据区域","key":"Ctrl+Shift+*","result":"Note: Shift+F8 可加选不相邻区域"},{"sect":"4 Formulas","n":"1","at":"04!D21","what":"让 Excel 自动写求和公式","key":"Alt+=","result":"生成 =SUM(D5:D19)；F2 可进去看引用"},{"sect":"4 Formulas","n":"2","at":"04!H5","what":"进入单元格编辑状态","key":"F2","result":"光标落在内容末尾；公式里可用方向键选引用"},{"sect":"4 Formulas","n":"3","at":"公式中的 D5","what":"在绝对/相对引用间循环切换","key":"F4","result":"$D$5→D$5→$D5→D5，按 4 次回到原样"},{"sect":"4 Formulas","n":"4","at":"04!H5:H19","what":"把公式向下填充到整列","key":"Ctrl+D","result":"Note: Ctrl+R 是向右填充"},{"sect":"5 Formatting","n":"1","at":"04!H5","what":"打开设置单元格格式对话框","key":"Ctrl+1","result":"对话框内用 Tab + 方向键，不要用鼠标"},{"sect":"5 Formatting","n":"2","at":"04!H5:H19","what":"套用百分比格式","key":"Ctrl+Shift+%","result":"Note: 原值 0.958 会显示为 95.8%，等于 ×100"},{"sect":"5 Formatting","n":"3","at":"04!D5:E19","what":"套用千位分隔符与两位小数","key":"Ctrl+Shift+!","result":"要 0 位小数用 Alt+H, 9 递减"},{"sect":"5 Formatting","n":"4","at":"04!A4:J4","what":"给表头加粗","key":"Ctrl+B","result":"等价于 Ctrl+2"},{"sect":"6 Workbook","n":"1","at":"任意表","what":"保存工作簿","key":"Ctrl+S","result":"Note: F12 是另存为"},{"sect":"6 Workbook","n":"2","at":"任意表","what":"新建一张工作表","key":"Shift+F11","result":"新表插在当前表左侧"},{"sect":"6 Workbook","n":"3","at":"任意表","what":"打开另存为对话框","key":"F12","result":"另存副本再练，保护原数据"}],"reviews":[{"round":"R1","offset":"1","what":"第 1 周导航键：Ctrl+方向键 / Ctrl+End / Ctrl+Home / Ctrl+PgDn","criteria":"连续 3 次不看表按对","note":"漏一天顺延，不清零"},{"round":"R2","offset":"2","what":"选择键：Ctrl+空格 / Shift+空格 / Ctrl+Shift+方向键 / Shift+F8","criteria":"能在 10 秒内完成 01 表第 1–3 天任务","note":"先处理输入法冲突再练"},{"round":"R3","offset":"4","what":"编辑键：F2 / Ctrl+Enter / Alt+Enter / Ctrl+D / Ctrl+减号","criteria":"能说出 Ctrl+Enter 与 Enter 的差别","note":""},{"round":"R4","offset":"7","what":"公式键：Alt+= / F4 / F9+Esc / Ctrl+` / Ctrl+[","criteria":"能独立完成 08 表第 4 节全部步骤","note":"F9 验证片段后必须 Esc"},{"round":"R5","offset":"14","what":"Alt 访问键链 + 格式键：单按 Alt / Alt+Q / Ctrl+1 / Ctrl+Shift+%","criteria":"在陌生功能区 20 秒内找到目标命令","note":"按屏幕字母，不背链"},{"round":"R6","offset":"30","what":"综合迁移：04_练习数据 清洗 + 汇总，再在真实报账表上做一轮","criteria":"连续 3 个工作日键盘优先，合理用鼠标不计","note":"真实任务压力下才形成自动化"}],"days":[{"n":1,"date":"11/09","stage":"第1周\n导航","task":"把光标从 A8 送到数据区最右下角，再回 A8。不许滚动条。","keys":"Ctrl+方向键 / Ctrl+End / Ctrl+Home","trap":"Ctrl+↓ 会停在第一个非空格前，遇空列会跳过头","goal":"能 10 秒内完成"},{"n":2,"date":"11/10","stage":"第1周\n导航","task":"选中\"销售额\"整列数据区（不含表头），再取消。","keys":"Ctrl+空格 / Shift+空格 / Ctrl+Shift+方向键","trap":"Ctrl+空格是整列(含表头)，Ctrl+Shift+* 选当前区域","goal":"能 8 秒内完成"},{"n":3,"date":"11/11","stage":"第1周\n导航","task":"同时选中两处不相邻区域并一次改粗体。","keys":"Shift+F8 + 方向键 + Ctrl+B","trap":"Shift+F8 加选区，Esc 会取消整个选区，小心","goal":"能一次成功"},{"n":4,"date":"11/12","stage":"第1周\n导航","task":"切到别的表再切回；再新建一个表。","keys":"Ctrl+PgDn / Ctrl+PgUp / Shift+F11","trap":"Shift+F11 新建表位置在右侧","goal":"不用鼠标完成切表+建表"},{"n":5,"date":"11/13","stage":"第1周\n编辑","task":"把第8行拆成两行；再删掉刚插入的行。","keys":"Ctrl+Shift+加号 / Ctrl+减号","trap":"插入行列时先选中整行(Shift+空格)才不会弹框","goal":"10 秒内完成"},{"n":6,"date":"11/14","stage":"第1周\n编辑","task":"选中一行，输入姓名后按 Ctrl+Enter 让它留在原地；用 Ctrl+D 向下填充。","keys":"Ctrl+Enter / Alt+Enter / Ctrl+D","trap":"Ctrl+Enter 是\"填充选区\"，多格选中时才会批量填","goal":"能说出两者区别"},{"n":7,"date":"11/15","stage":"第1周\n复盘","task":"把 04_练习数据 的 C 列全部改成百分比、D 列加千分位。","keys":"Ctrl+Shift+% / Ctrl+Shift+! / Ctrl+1","trap":"Ctrl+1 打开格式对话框后要用 Tab+方向键进去","goal":"全程零鼠标"},{"n":8,"date":"11/16","stage":"第2周\n公式","task":"在 F8 写 =C8*D8 并向下填充 20 行；把 D8 改成绝对引用。","keys":"F2 / F4 / Ctrl+D / Ctrl+Shift+U","trap":"$D$8→D$8→$D8→D8（按 4 次回到原样）","goal":"30 秒内完成"},{"n":9,"date":"11/17","stage":"第2周\n公式","task":"给\"合计\"行做求和；再用定位找出所有空格并填 0。","keys":"Alt+= / F5→Alt+S→K→确定 / Ctrl+Enter","trap":"F5 定位条件里\"空值\"是 K；填完必须 Ctrl+Enter","goal":"能独立做出"},{"n":10,"date":"11/18","stage":"第2周\n公式","task":"在公式编辑态只算其中一段，验证中间值；再把结果变回公式。","keys":"选中片段按 F9 / Esc","trap":"F9 会把片段变成数字且不可逆，做完务必 Esc","goal":"知道 Esc 能救回来"},{"n":11,"date":"11/19","stage":"第2周\n数据","task":"打开筛选、按条件筛出某值、清除筛选。","keys":"Ctrl+Shift+L / Alt+A, D / Alt+A, C","trap":"Alt+A 是数据选项卡访问键","goal":"不用鼠标完成筛选"},{"n":12,"date":"11/20","stage":"第2周\n数据","task":"把\"单价×数量\"列复制成纯数值，覆盖原公式列。","keys":"Ctrl+C / Ctrl+Alt+V / V / 确定","trap":"选择性粘贴按 V=数值，按 T=仅格式","goal":"不丢数据"},{"n":13,"date":"11/21","stage":"第2周\n复盘","task":"把 04_练习数据 前 20 行按销售额降序排一次，再撤销回原状。","keys":"Alt+A, D→方向键→S / Ctrl+Z / Ctrl+Y","trap":"Alt+A, S 是升序、Alt+A, O 是降序（各版本不同，按 Alt 看提示）","goal":"能说出撤销与重做的差别"},{"n":14,"date":"11/22","stage":"第3周\n格式","task":"给选区加外边框、去掉边框；再统一调列宽为自适应。","keys":"Ctrl+Shift+& / Ctrl+Shift+_ / Alt+H, O, I","trap":"Alt+H, O, I 是自动调整列宽，I=AutoFit","goal":"连续三次不用鼠标"},{"n":15,"date":"11/23","stage":"第3周\n格式","task":"复制一处格式到另一处；给表头刷同一套格式。","keys":"Alt+H, FP / Ctrl+Shift+C / Ctrl+Shift+V","trap":"格式刷按两次可连续刷，Esc 结束","goal":"能连续刷 3 处"},{"n":16,"date":"11/24","stage":"第3周\n菜单","task":"打开\"隐藏行\"\"隐藏列\"\"取消隐藏\"，全程只用键。","keys":"Ctrl+9 / Ctrl+0 / Alt+H, O, U, H","trap":"Ctrl+9 藏行、Ctrl+0 藏列，取消在 Alt+H, O, U","goal":"一次做对三个"},{"n":17,"date":"11/25","stage":"第3周\n菜单","task":"用 Alt 访问键打开\"冻结窗格\"和\"拆分\"。","keys":"Alt+W, F / Alt+W, S","trap":"按 Alt 后屏幕上字母即提示，别背","goal":"能在陌生功能区找到命令"},{"n":18,"date":"11/26","stage":"第3周\n综合","task":"从零建一张 5 列 20 行表：输入→公式→格式→汇总→命名区域。","keys":"上面所有 + Ctrl+F3","trap":"命名区域比背单元格地址快得多","goal":"一次成型不回头"},{"n":19,"date":"11/27","stage":"第3周\n综合","task":"把 04_练习数据 的清洗+汇总在 90 秒内做完。","keys":"自由组合","trap":"计时做，慢就是没形成肌肉记忆","goal":"达标 90 秒"},{"n":20,"date":"11/28","stage":"第3周\n真实","task":"今天全部真实工作（排课表/考勤/报账）键盘优先；合理用鼠标不计破戒。","keys":"自由组合","trap":"全天任务不填耗时秒，在备注说明完成情况即可","goal":"全天零破戒"},{"n":21,"date":"11/29","stage":"第3周\n验收","task":"把\"不用鼠标\"变成默认：只在拖拽图表/排版时才允许拿鼠标。","keys":"—","trap":"这不是惩罚式戒断，是取舍规则","goal":"连续 3 天零破戒即毕业"}],"notes":[{"k":"为什么练","v":"不是\"鼠标比键盘慢\"。单次点击鼠标更快。真正的损耗是\"离开键盘→移动→在屏幕找指针→点菜单→手回到键盘\"这个来回，建模时一分钟发生十几次。目标是让手始终停在键盘区。"},{"k":"核心原则","v":"1) 别背全表，按动作类别练：导航 → 编辑 → 格式 → 菜单。2) 每天只做 1 个模块约 20 分钟，比周末集中刷有效（经验做法，未做对照实测）。3) Alt 访问键可覆盖多数功能区命令；字母随版本/语言变化，以屏幕提示为准。"},{"k":"怎么打卡","v":"打开 01_21天打卡表。每天做一个模块：先在 04_练习数据 里做规定动作（禁用鼠标），再回到打卡表填\"耗时秒\"。耗时连续下降才算形成肌肉记忆。"},{"k":"禁用鼠标的物理做法","v":"把鼠标翻过来放，或从 USB 拔掉；USB 支持热插拔，练完直接插回即可。不要考验意志力。"},{"k":"三条硬规则","v":"1) 前 3 天变慢是正常适应成本，不预设倍数。2) 遇到不会的操作先按 Alt 看字母提示，或按 Alt+Q 搜命令。3) 漏练一天不等于清零：Lally et al. 2010 显示偶尔漏做对自动化曲线无显著影响，次日继续即可。"},{"k":"验收标准","v":"第 7 天：不看键盘完成跳到数据末尾/选中整列/插入行/百分比格式。第 14 天：在 04_练习数据 上按自己的节奏完成一轮清洗汇总。第 21 天：完成入门验收。注意：动作自动化中位约 66 天（区间 18–254 天），入门后仍需 09_间隔复习 巩固。"},{"k":"工作表导航","v":"Ctrl+PgDn 向后切表，Ctrl+PgUp 向前切表。现在按 Ctrl+PgDn 去打卡表——这是你今天第一个动作。"},{"k":"警告","v":"Mac 的 Alt/Cmd 序列与 Windows 不同，本手册按 Windows 写。Excel 网页版快捷键与桌面版不一致，不用于本训练。"},{"k":"适用键盘布局","v":"微软官方说明：快捷键针对美式键盘布局，其他布局的键可能不对应。本手册按全尺寸键盘 + 数字小键盘编写。"},{"k":"中文输入法冲突","v":"Ctrl+空格 常被中文输入法占为中英切换；Ctrl+Shift 系列也可能被劫持。练 02 表第 9 条、05 表第 13 条前，先把输入法切到英文状态，或在系统「高级键盘设置」里改掉输入法热键。冲突键在 08_分步练习 已标注。"},{"k":"键位书写规范","v":"v3 全表统一微软官方写法：加号 + 表示同时按（如 Ctrl+Shift+↓）；访问键链首段沿用官方 Alt+H 加号写法，后续字母用逗号分隔表示依次按，如 Alt+H, O, I（自动调整列宽）、Alt+H, A, C。单键组合 Alt+Q、Alt+=、Alt+Enter、Alt+F4、Alt+F11 的 + 一律保留，不改逗号。05 表另用 → 表示步骤顺序。依据：Microsoft Support《Excel 中的键盘快捷方式》，见 07 表。"},{"k":"量化断言处理","v":"v1 的「覆盖 80%/90%」「5~7 天形成肌肉记忆」「慢 2~3 倍」「一次破戒等于重开」均无出处，且与 Lally 2010 / Singh 2024 结论相反，v2 已删除或改为定性表述。依据与等级见 07_依据来源。"},{"k":"训练立场","v":"目标是键盘优先，不是禁用鼠标。图表拖拽、图形对齐、插件首次配置等场景用鼠标是正确取舍，不计入 01 表的「非必要鼠标」列。见 06_破戒陷阱。"},{"k":"工作表导航（补充）","v":"Ctrl+PgDn 向后切表，Ctrl+PgUp 向前切表。目录：00 说明 / 01 打卡 / 02 速查 / 03 Alt 链 / 04 练习数据（自带示例文件）/ 05 按键序列 / 06 取舍 / 07 依据 / 08 分步练习 / 09 间隔复习。"}],"sources":[{"level":"一级·官方","name":"Microsoft Support《Excel 中的键盘快捷方式》","link":"support.microsoft.com/zh-cn/office/1798d9d5-842a-42b8-9c99-9b7213f0040f","supports":"全部键位；美式键盘布局；+ 同时按 / , 依次按；F4、Ctrl+D、Ctrl+Y、Shift+F2；v3 访问键链格式（Alt+H, O, I）亦以官方表格为准","date":"2026-11-09","note":"键位准确性唯一权威对照源"},{"level":"一级·同行评审","name":"Lally et al. 2010, European Journal of Social Psychology 40(6):998-1009","link":"DOI 10.1002/ejsp.674","supports":"自动化中位 66 天、区间 18–254 天；漏做一天不显著影响曲线","date":"2010","note":"96 人、12 周、每日自评；推翻「21 天」「一次破戒清零」"},{"level":"一级·系统综述","name":"Singh et al. 2024, Healthcare 12(23):2488","link":"DOI 10.3390/healthcare12232488","supports":"中位 59–66 天；20 项研究、2601 人；均值 106–154 天","date":"2024","note":"与 Lally 2010 方向一致"},{"level":"二级·教学体例","name":"excel-easy.com《Keyboard Shortcuts in Excel》","link":"excel-easy.com/basics/keyboard-shortcuts.html","supports":"08_分步练习：一页一主题、编号步骤、先说目的再给键、Note 提示、自带示例文件","date":"2026-11-09","note":"免费教程，49 章，每章配可下载 xlsx"},{"level":"二级·训练范式","name":"Excel-Obstacle-Course","link":"github.com/Excelobstaclecourse/Excel-Obstacle-Course","supports":"计时 + 第 1 次成绩作 baseline 的思路","date":"2026-11-09","note":"4 stars；README 仅 24 字节，细节未复核"},{"level":"三级·行业背景","name":"WSO / Wall Street Prep、BIWS 快捷键清单（经管之家转载）","link":"二手转载","supports":"高频键取舍的行业背景","date":"2017","note":"v2 起不作 2026 键位依据"},{"level":"三级·行业背景","name":"JPM 实习经验帖（搜狐/微信转述）","link":"二手转述","supports":"「少用鼠标」从业经验","date":"2024-07","note":"无原始出处，不支撑任何天数断言"},{"level":"三级·商业","name":"Macabacus 官网 features","link":"商业插件营销页","supports":"金融圈把快捷键当卖点的商业佐证","date":"2026-08","note":"插件类快捷键不在本手册范围"},{"level":"本机实测","name":"Office16 与 WPS 双环境","link":"v1 记录","supports":"02 表版本差异列","date":"2026-10-09","note":"Alt 链以 Excel 为准"},{"level":"v2 已删除","name":"80%/90% 覆盖率、5~7 天肌肉记忆、慢 2~3 倍、一次破戒清零","link":"无出处","supports":"—","date":"—","note":"无实证且与 Lally 2010 / Singh 2024 相反，v2 已删除"}],"quiz":[{"id":"q01","display":"Ctrl+↓","hint":"跳到数据区下边缘","cat":"导航","expect":{"mods":["ctrl"],"key":"ArrowDown"}},{"id":"q02","display":"Ctrl+↑","hint":"跳到数据区上边缘","cat":"导航","expect":{"mods":["ctrl"],"key":"ArrowUp"}},{"id":"q03","display":"Ctrl+→","hint":"跳到数据区右边缘","cat":"导航","expect":{"mods":["ctrl"],"key":"ArrowRight"}},{"id":"q04","display":"Ctrl+End","hint":"到已用区域右下角","cat":"导航","expect":{"mods":["ctrl"],"key":"End"}},{"id":"q05","display":"Ctrl+Home","hint":"回到 A1","cat":"导航","expect":{"mods":["ctrl"],"key":"Home"}},{"id":"q06","display":"Ctrl+PgDn","hint":"切到下一个工作表","cat":"导航","expect":{"mods":["ctrl"],"key":"PageDown"}},{"id":"q07","display":"Ctrl+PgUp","hint":"切到上一个工作表","cat":"导航","expect":{"mods":["ctrl"],"key":"PageUp"}},{"id":"q08","display":"F5","hint":"打开定位对话框","cat":"导航","expect":{"mods":[],"key":"F5"}},{"id":"q09","display":"Ctrl+A","hint":"选择当前区域","cat":"选择","expect":{"mods":["ctrl"],"key":"a"}},{"id":"q10","display":"Ctrl+Shift+↓","hint":"向下选到数据边缘","cat":"选择","expect":{"mods":["ctrl","shift"],"key":"ArrowDown"}},{"id":"q11","display":"Ctrl+Shift+End","hint":"选到已用区域末尾","cat":"选择","expect":{"mods":["ctrl","shift"],"key":"End"}},{"id":"q12","display":"Shift+F8","hint":"加选不相邻区域","cat":"选择","expect":{"mods":["shift"],"key":"F8"}},{"id":"q13","display":"F2","hint":"编辑活动单元格","cat":"编辑","expect":{"mods":[],"key":"F2"}},{"id":"q14","display":"Ctrl+Enter","hint":"用当前输入填充选区","cat":"编辑","expect":{"mods":["ctrl"],"key":"Enter"}},{"id":"q15","display":"Alt+Enter","hint":"单元格内换行","cat":"编辑","expect":{"mods":["alt"],"key":"Enter"}},{"id":"q16","display":"Ctrl+D","hint":"向下填充","cat":"编辑","expect":{"mods":["ctrl"],"key":"d"}},{"id":"q17","display":"Ctrl+Z","hint":"撤销","cat":"编辑","expect":{"mods":["ctrl"],"key":"z"}},{"id":"q18","display":"Ctrl+Y","hint":"重做 / 重复上一步","cat":"编辑","expect":{"mods":["ctrl"],"key":"y"}},{"id":"q19","display":"Ctrl+F","hint":"查找","cat":"编辑","expect":{"mods":["ctrl"],"key":"f"}},{"id":"q20","display":"Ctrl+H","hint":"替换","cat":"编辑","expect":{"mods":["ctrl"],"key":"h"}},{"id":"q21","display":"Ctrl+K","hint":"插入超链接","cat":"编辑","expect":{"mods":["ctrl"],"key":"k"}},{"id":"q22","display":"Ctrl+1","hint":"设置单元格格式","cat":"格式","expect":{"mods":["ctrl"],"key":"1"}},{"id":"q23","display":"Ctrl+B","hint":"加粗","cat":"格式","expect":{"mods":["ctrl"],"key":"b"}},{"id":"q24","display":"Ctrl+I","hint":"斜体","cat":"格式","expect":{"mods":["ctrl"],"key":"i"}},{"id":"q25","display":"Ctrl+U","hint":"下划线","cat":"格式","expect":{"mods":["ctrl"],"key":"u"}},{"id":"q26","display":"Alt+=","hint":"自动求和","cat":"公式","expect":{"mods":["alt"],"key":"="}},{"id":"q27","display":"F4","hint":"切换绝对/相对引用","cat":"公式","expect":{"mods":[],"key":"F4"}},{"id":"q28","display":"Shift+F3","hint":"插入函数","cat":"公式","expect":{"mods":["shift"],"key":"F3"}},{"id":"q29","display":"F9","hint":"全部重算","cat":"公式","expect":{"mods":[],"key":"F9"}},{"id":"q30","display":"Alt+Q","hint":"搜索命令","cat":"菜单","expect":{"mods":["alt"],"key":"q"}},{"id":"q31","display":"Alt+H, O, I","hint":"自动调整列宽","cat":"菜单","expect":{"seq":[{"mods":["alt"],"key":"h"},{"mods":[],"key":"o"},{"mods":[],"key":"i"}]}},{"id":"q32","display":"Alt+H, M, M","hint":"合并后居中","cat":"菜单","expect":{"seq":[{"mods":["alt"],"key":"h"},{"mods":[],"key":"m"},{"mods":[],"key":"m"}]}},{"id":"q33","display":"Alt+W, F, F","hint":"冻结首行","cat":"菜单","expect":{"seq":[{"mods":["alt"],"key":"w"},{"mods":[],"key":"f"},{"mods":[],"key":"f"}]}},{"id":"q34","display":"Alt+A, D","hint":"打开筛选箭头","cat":"菜单","expect":{"seq":[{"mods":["alt"],"key":"a"},{"mods":[],"key":"d"}]}},{"id":"q35","display":"Alt+H, B","hint":"加轮廓边框","cat":"菜单","expect":{"seq":[{"mods":["alt"],"key":"h"},{"mods":[],"key":"b"}]}}]};
+
+const $ = id => document.getElementById(id);
+const KEY = 'excelKeyboardV3';
+const DAY = 86400000;
+const DELAYS = [1, 2, 4, 7, 14, 30];
+let state = load();
+let cur = null, seqIdx = 0, startedAt = 0, running = false, catFilter = '';
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && s.v === 3) return s;
+    }
+  }catch(e){}
+  return {v:3, items:{}, days:{}, stats:{right:0, wrong:0, streak:0, totalMs:0, count:0}};
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(t){
+  if(!t) return '—';
+  const d = new Date(t);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function dueCount(){
+  const now = Date.now();
+  return DATA.quiz.filter(q => {
+    const it = state.items[q.id];
+    return !it || !it.due || it.due <= now;
+  }).length;
+}
+function renderStats(){
+  $('sDue').textContent = dueCount();
+  $('sMastered').textContent = DATA.quiz.filter(q => (state.items[q.id]?.c || 0) >= 4).length;
+  const total = state.stats.right + state.stats.wrong;
+  $('sAcc').textContent = total ? Math.round(state.stats.right / total * 100) + '%' : '—';
+  $('sStreak').textContent = state.stats.streak;
+}
+
+function pickQuestion(){
+  const now = Date.now();
+  const due = DATA.quiz.filter(q => {
+    const it = state.items[q.id];
+    return !it || !it.due || it.due <= now;
+  });
+  const pool = due.length ? due : DATA.quiz;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function startQuestion(){
+  cur = pickQuestion();
+  seqIdx = 0; startedAt = Date.now(); running = true;
+  $('qCat').textContent = cur.cat + ' · ' + (cur.expect.seq ? '按键序列' : '组合键');
+  $('qText').textContent = cur.hint;
+  $('qHint').textContent = cur.expect.seq
+    ? '依次敲完 ' + cur.expect.seq.length + ' 段按键；错一段即重来。'
+    : '直接按下这个快捷键，不要用鼠标。';
+  $('capture').className = 'keycapture active';
+  $('capture').textContent = cur.expect.seq
+    ? '等待第 1 / ' + cur.expect.seq.length + ' 段按键…'
+    : '等待按键…';
+  $('feedback').className = 'feedback info';
+  $('feedback').textContent = '';
+  $('timer').textContent = '';
+  renderStats();
+}
+function normEvent(e){
+  const mods = [];
+  if(e.ctrlKey) mods.push('ctrl');
+  if(e.altKey) mods.push('alt');
+  if(e.shiftKey) mods.push('shift');
+  if(e.metaKey) mods.push('meta');
+  let key = e.key;
+  if(e.code === 'Space') key = ' ';
+  if(/^[A-Za-z]$/.test(key)) key = key.toLowerCase();
+  return {mods: mods.sort(), key: key};
+}
+function same(a, b){
+  return a.key === b.key &&
+    a.mods.length === b.mods.length &&
+    a.mods.every((m, i) => m === [...b.mods].sort()[i]);
+}
+function describe(a){
+  const m = a.mods.map(x => ({ctrl:'Ctrl',alt:'Alt',shift:'Shift',meta:'Win'}[x] || x));
+  const k = a.key === ' ' ? '空格' : a.key;
+  return [...m, k].join('+');
+}
+function grade(ok, reason){
+  if(!running) return;
+  running = false;
+  const id = cur.id, it = state.items[id] || {c:0, right:0, wrong:0, due:0};
+  const ms = Date.now() - startedAt;
+  if(ok){
+    it.c = Math.min((it.c || 0) + 1, DELAYS.length);
+    it.right++; it.due = Date.now() + DELAYS[it.c - 1] * DAY;
+    state.stats.right++; state.stats.streak++;
+    state.stats.totalMs += ms; state.stats.count++;
+    $('feedback').className = 'feedback ok';
+    $('feedback').textContent = '正确 · ' + cur.display + ' · ' + (ms/1000).toFixed(1) + ' 秒 · 下次复习 ' + fmtDate(it.due);
+    $('capture').textContent = '✓ ' + cur.display;
+  }else{
+    it.c = 0; it.wrong++; it.due = Date.now() + DAY;
+    state.stats.wrong++; state.stats.streak = 0;
+    $('feedback').className = 'feedback bad';
+    $('feedback').textContent = reason + ' · 正确是 ' + cur.display + ' · 明天再练';
+    $('capture').textContent = '✗ ' + cur.display;
+  }
+  state.items[id] = it;
+  $('capture').className = 'keycapture';
+  save(); renderStats(); renderMastery();
+  setTimeout(startQuestion, ok ? 700 : 1500);
+}
+function onKey(e){
+  if(!running) return;
+  const tag = (e.target && e.target.tagName || '').toLowerCase();
+  if(tag === 'input' || tag === 'select' || tag === 'textarea') return;
+  const panel = document.querySelector('.panel.on');
+  if(!panel || panel.dataset.panel !== 'train') return;
+  e.preventDefault();
+  const a = normEvent(e);
+  if(cur.expect.seq){
+    const step = cur.expect.seq[seqIdx];
+    if(same(a, step)){
+      seqIdx++;
+      if(seqIdx >= cur.expect.seq.length){ grade(true); return; }
+      $('capture').textContent = '✓ 已按 ' + seqIdx + ' / ' + cur.expect.seq.length + ' 段，继续…';
+      $('feedback').className = 'feedback info';
+      $('feedback').textContent = '下一段：' + describe(cur.expect.seq[seqIdx]);
+    }else{
+      grade(false, '你按的是 ' + describe(a) + '，第 ' + (seqIdx+1) + ' 段应为 ' + describe(step));
+    }
+  }else{
+    if(same(a, cur.expect)) grade(true);
+    else grade(false, '你按的是 ' + describe(a));
+  }
+}
+
+function renderQuick(){
+  const tbody = $('qTable').querySelector('tbody');
+  const kw = ($('qSearch').value || '').trim().toLowerCase();
+  const cat = $('qCatSel').value || catFilter;
+  const rows = DATA.shortcuts.filter(s => {
+    if(cat && s.cat !== cat) return false;
+    if(!kw) return true;
+    return (s.op + ' ' + s.key + ' ' + s.note + ' ' + s.mouse).toLowerCase().includes(kw);
+  });
+  tbody.innerHTML = rows.map(s =>
+    '<tr><td class="num">' + esc(s.n) + '</td><td>' + esc(s.cat) + '</td>' +
+    '<td>' + esc(s.op) + '</td><td>' + (s.star ? '<span class="star">★ </span>' : '') +
+    '<kbd>' + esc(s.key.replace(/^★\s*/, '')) + '</kbd>' +
+    (s.blocked ? ' <span class="blocked">不可测</span>' : '') + '</td>' +
+    '<td>' + esc(s.mouse) + '</td><td>' + esc(s.note) + '</td></tr>').join('');
+  $('qCount').textContent = '共 ' + rows.length + ' / ' + DATA.shortcuts.length + ' 条';
+}
+function renderChains(){
+  $('cCount').textContent = '共 ' + DATA.chains.length + ' 条';
+  $('cTable').querySelector('tbody').innerHTML = DATA.chains.map(c =>
+    '<tr><td class="num">' + esc(c.n) + '</td><td><kbd>' + esc(c.chain) + '</kbd></td>' +
+    '<td>' + esc(c.how) + '</td><td>' + esc(c.what) + '</td>' +
+    '<td>' + esc(c.mouse) + '</td><td>' + esc(c.memo) + '</td></tr>').join('');
+}
+function renderSteps(){
+  $('stCount').textContent = '共 ' + DATA.steps.length + ' 步';
+  const groups = {};
+  DATA.steps.forEach(s => { (groups[s.sect] = groups[s.sect] || []).push(s); });
+  $('stepList').innerHTML = Object.keys(groups).map(k =>
+    '<div class="sect-title">' + esc(k) + '</div>' +
+    groups[k].map(s =>
+      '<div class="step"><div class="n">' + esc(s.n) + '</div>' +
+      '<div class="what">' + esc(s.what) + '<div class="mini">起始格/选区：' + esc(s.at) +
+      ' · ' + esc(s.result) + '</div></div>' +
+      '<div class="key"><kbd>' + esc(s.key) + '</kbd></div></div>').join('')).join('');
+}
+function renderDays(){
+  const done = DATA.days.filter(d => state.days[d.n]).length;
+  $('dayBar').style.width = (done / DATA.days.length * 100) + '%';
+  $('dayProgress').textContent = '已完成 ' + done + ' / ' + DATA.days.length + ' 天';
+  $('dayGrid').innerHTML = DATA.days.map(d =>
+    '<div class="day' + (state.days[d.n] ? ' done' : '') + '" data-day="' + d.n + '">' +
+    '<div class="d">第 ' + esc(d.n) + ' 天 · ' + esc(d.date) + ' · ' + esc(d.stage).replace(/\n/g,' ') + '</div>' +
+    '<div class="t">' + esc(d.task) + '</div>' +
+    '<div class="s">' + (state.days[d.n] ? '✓ 已完成' : '点击标记完成') + '</div></div>').join('');
+}
+function renderReviews(){
+  $('rTable').querySelector('tbody').innerHTML = DATA.reviews.map(r =>
+    '<tr><td>' + esc(r.round) + '</td><td>' + esc(r.offset) + '</td><td>' + esc(r.what) +
+    '</td><td>' + esc(r.criteria) + '</td><td>' + esc(r.note) + '</td></tr>').join('');
+}
+function renderMastery(){
+  const rows = DATA.quiz.filter(q => state.items[q.id]);
+  const body = rows.length ? rows.map(q => {
+    const it = state.items[q.id];
+    return '<tr><td><kbd>' + esc(q.display) + '</kbd></td><td>' + esc(q.cat) + '</td>' +
+      '<td>' + (it.c || 0) + ' / ' + DELAYS.length + '</td><td>' + fmtDate(it.due) + '</td>' +
+      '<td>' + (it.right || 0) + ' / ' + (it.wrong || 0) + '</td></tr>';
+  }).join('') : '<tr><td colspan="5" class="mini">还没有练习记录。去训练台按几题吧。</td></tr>';
+  $('mTable').querySelector('tbody').innerHTML = body;
+}
+function renderAbout(){
+  $('noteList').innerHTML = DATA.notes.map(n =>
+    '<div class="card"><h3>' + esc(n.k) + '</h3><p>' + esc(n.v) + '</p></div>').join('');
+  $('srcTable').querySelector('tbody').innerHTML = DATA.sources.map(s =>
+    '<tr><td>' + esc(s.level) + '</td><td>' + esc(s.name) + '</td><td>' + esc(s.link) + '</td>' +
+    '<td>' + esc(s.supports) + '</td><td>' + esc(s.date) + '</td><td>' + esc(s.note) + '</td></tr>').join('');
+}
+function renderMeta(){
+  const m = DATA.meta;
+  $('metaLine').textContent = '数据源：' + m.source + ' · ' + m.sheets + ' 张表 · ' +
+    m.shortcuts + ' 条快捷键 / ' + m.chains + ' 条 Alt 链 / ' + m.steps + ' 步练习 · ' + m.built;
+  $('footMeta').textContent = 'v3 · ' + m.built;
+  $('blockNote').innerHTML = '<b>已跳过 ' + m.blockedCount + ' 条浏览器 / 输入法占用键</b>：' +
+    esc(m.blockedKeys.join('、')) + '。这些键在速查表里标「不可测」，不进入按键测验；' +
+    '改用原 Excel 工作簿练习。可测题 ' + m.quizCount + ' 条。';
+}
+function renderAll(){
+  renderMeta(); renderStats(); renderQuick(); renderChains(); renderSteps();
+  renderDays(); renderReviews(); renderMastery(); renderAbout();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tabs button').forEach(b =>
+    b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p =>
+    p.classList.toggle('on', p.dataset.panel === name));
+  if(name !== 'train' && running){
+    running = false;
+    $('capture').className = 'keycapture';
+    $('capture').textContent = '已暂停，回到训练台继续';
+  }
+}
+function exportState(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Excel键盘训练进度_' + fmtDate(Date.now()) + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function init(){
+  const cats = [...new Set(DATA.shortcuts.map(s => s.cat))];
+  cats.forEach(c => {
+    const o = document.createElement('option'); o.value = c; o.textContent = c;
+    $('qCatSel').appendChild(o);
+    const chip = document.createElement('button');
+    chip.type = 'button'; chip.className = 'chip'; chip.textContent = c;
+    chip.addEventListener('click', () => {
+      catFilter = (catFilter === c ? '' : c);
+      $('qCatSel').value = catFilter;
+      document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.textContent === catFilter));
+      renderQuick();
+    });
+    $('qChips').appendChild(chip);
+  });
+  document.querySelectorAll('.tabs button').forEach(b =>
+    b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  $('qSearch').addEventListener('input', renderQuick);
+  $('qCatSel').addEventListener('change', () => { catFilter = $('qCatSel').value;
+    document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.textContent === catFilter));
+    renderQuick(); });
+  $('btnStart').addEventListener('click', startQuestion);
+  $('btnAnswer').addEventListener('click', () => {
+    if(!running) return;
+    grade(false, '答案：' + cur.display);
+  });
+  $('btnSkip').addEventListener('click', () => { if(running) grade(false, '已跳过'); else startQuestion(); });
+  $('btnReset').addEventListener('click', () => {
+    if(!window.confirm('清空本机全部练习与打卡进度？此操作不可撤销。')) return;
+    state = {v:3, items:{}, days:{}, stats:{right:0, wrong:0, streak:0, totalMs:0, count:0}};
+    save(); running = false; renderAll();
+    $('qText').textContent = '进度已清空，点击「开始练习」重新开始';
+    $('capture').className = 'keycapture'; $('capture').textContent = '未开始';
+  });
+  $('btnClearDays').addEventListener('click', () => {
+    if(!window.confirm('清空 21 天打卡记录？练习掌握度保留。')) return;
+    state.days = {}; save(); renderDays();
+  });
+  $('dayGrid').addEventListener('click', e => {
+    const d = e.target.closest('.day'); if(!d) return;
+    const n = d.dataset.day;
+    if(state.days[n]) delete state.days[n]; else state.days[n] = Date.now();
+    save(); renderDays();
+  });
+  $('btnExport').addEventListener('click', exportState);
+  $('btnPrintQuick').addEventListener('click', () => { switchTab('quick'); setTimeout(() => window.print(), 80); });
+  $('btnPrintAll').addEventListener('click', () => {
+    document.body.classList.add('print-all');
+    setTimeout(() => { window.print(); document.body.classList.remove('print-all'); }, 80);
+  });
+  document.addEventListener('keydown', onKey);
+  renderAll();
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>
